@@ -1,0 +1,8 @@
+
+CC          := "gcc"
+FLAGS       := "-Wall -Wextra -Wpedantic -Werror -Wno-gnu-zero-variadic-macro-arguments"
+BUILD_DIR   := "bin"
+
+run ARG:
+    @{{CC}} {{FLAGS}} e{{ARG}}.c "-o" {{BUILD_DIR}}/e{{ARG}}
+    @./{{BUILD_DIR}}/e{{ARG}}
