@@ -1,4 +1,3 @@
-#include "ing.h"
 #define ING_STRIP_PREFIX
 
 #define ING_CORE_IMPL

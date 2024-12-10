@@ -4,11 +4,14 @@ SOURCES     := `find . -name "*.c"`
 BUILD_DIR   := "build"
 PROGRAM     := "py"
 
-std_flags   := "-Wall -Wextra -Wpedantic -Werror -D_FORTIFY_SOURCE=2 -Wno-gnu-zero-variadic-macro-arguments"
+# -D_FORTIFY_SOURCE=2
+std_flags   := "-Wall -Wextra -Wpedantic -Werror -Wno-gnu-zero-variadic-macro-arguments"
 opt_flags   := "-O3 -march=native -flto -ffast-math"
 dbg_flags   := "-O0 -g3 -fno-omit-frame-pointer"
 wrn_flags   := "-Wformat=2 -Wcast-align -Wcast-qual -Wconversion -Wshadow -Wpointer-arith -Wstrict-aliasing=2"
 sec_flags   := "-fstack-protector-strong -fPIE"
+# vet_flags   := "-fsanitize=address,undefined"
+vet_flags   := "-fsanitize=undefined"
 
 bin_includes := "-I."
 
@@ -22,7 +25,7 @@ debug   :
 quick   :
     {{CC}} {{std_flags}} "-O2" {{SOURCES}} "-o" {{BUILD_DIR}}/{{PROGRAM}}
 vet     :
-    {{CC}} {{std_flags}} {{dbg_flags}} "-fsanitize=address,undefined" {{SOURCES}} "-o" {{BUILD_DIR}}/{{PROGRAM}}
+    {{CC}} {{std_flags}} {{dbg_flags}} {{vet_flags}} {{SOURCES}} "-o" {{BUILD_DIR}}/{{PROGRAM}}
 
 build FLAGS:
     {{CC}} {{FLAGS}} {{SOURCES}} "-o" {{BUILD_DIR}}/{{PROGRAM}}
@@ -40,7 +43,7 @@ show-flags:
     @echo "[security]       {{sec_flags}}"
 
 example ARG:
-    @{{CC}} {{std_flags}} examples/e{{ARG}}.c "-o" {{BUILD_DIR}}/e{{ARG}}
+    @{{CC}} {{std_flags}} {{vet_flags}} {{bin_includes}} examples/e{{ARG}}.c "-o" {{BUILD_DIR}}/e{{ARG}}
     @./{{BUILD_DIR}}/e{{ARG}}
 
 build-bin ARG:

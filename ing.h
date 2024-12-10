@@ -22,10 +22,73 @@
 
 #if defined(_WIN32) || defined(_WIN64) || defined(_WINDOWS_)
     #define ING_IS_WINDWOS
+#elif defined(__APPLE__) || defined(__MACH__)
+    #define ING_IS_MACOS
+#elif defined(__linux__) || defined(__gnu_linux__)
+    #define ING_IS_LINUX
+#elif defined(__unix__) || defined(__unix)
+    #define ING_IS_UNIX
+#endif
+
+#if defined(_MSC_VER)
+    #define ING_COMPILER_MSVC
+#elif defined(__clang__)
+    #define ING_COMPILER_CLANG
+#elif defined(__GNUC__)
+    #define ING_COMPILER_GCC
+#elif defined(__INTEL_COMPILER)
+    #define ING_COMPILER_INTEL
 #endif
 
 #define ing_define static inline
-#define ing_mustuse [[nodiscard]]
+
+#if defined(ING_COMPILER_MSVC)
+    #define ing_mustuse _Check_return_
+    #define ing_typeof(__type)  __typeof((__type))
+    #define ing_alignof(__type) _alignof((__type))
+    #define ing_forceinline __forceinline
+    #define ing_restrict __restrict
+#elif defined(ING_COMPILER_CLANG) || defined(ING_COMPILER_GCC)
+    #define ing_mustuse __attribute__((warn_unused_result))
+    #define ing_typeof(__type)  __typeof__((__type))
+    #define ing_alignof(__type) __alignof__(__type)
+    #define ing_forceinline __attribute__((always_inline)) inline
+    #define ing_restrict __restrict__
+
+    #define ing_format(__printf, __fmt, __args) __attribute__((format(__printf, __fmt, __args)))
+#else
+    #define ing_mustuse
+    #define ing_typeof(__type)  typeof((__type))
+    #define ing_alignof(__type) _Alignof((__type))
+    #define ing_forceinline inline
+    #define ing_restrict
+#endif
+
+#if defined(ING_COMPILER_MSVC)
+    #define ing_likely(x) (x)
+    #define ing_unlikely(x) (x)
+#else
+    #define ing_likely(x) __builtin_expect(!!(x), 1)
+    #define ing_unlikely(x) __builtin_expect(!!(x), 0)
+#endif
+
+#if defined(ING_COMPILER_MSVC)
+    #define ing_prefetch(__addr) _mm_prefetch((const char*)(__addr), _MM_HINT_T0)
+#else
+    #define ing_prefetch(__addr) __builtin_prefetch(__addr)
+#endif
+
+#if defined(ING_COMPILER_MSVC)
+    #define ing_function __FUNCTION__
+#else
+    #define ing_function __func__
+#endif
+
+#if defined(ING_COMPILER_MSVC)
+    #define ing_assume(__expr) __assume(__expr)
+#else
+    #define ing_assume(__expr) do { if (!(__expr)) __builtin_unreachable(); } while (0)
+#endif
 
 #define ING_TODO(msg)           __ing_panic_handler("TODO", msg)
 #define ING_NOT_IMPLEMENTED(msg)__ing_panic_handler("NOT IMPLEMENTED", msg)
@@ -94,6 +157,12 @@ typedef enum { Ing_None } Ing_None_Kind;
             Err_Type    err;                    \
         } val;                                  \
     }
+
+#define Ing_Maybe(Val_Type)                     \
+    struct {                                    \
+        Val_Type    value;                      \
+        uint8_t     err;                        \
+    }                                           \
 
 #define ing_ok(out)  \
     { .kind = Ing_Ok, .val = { .ok = out } }
@@ -176,6 +245,11 @@ typedef uint64_t    Ing_B64;
 
         typedef float    f32;
         typedef double   f64;
+
+        typedef uint8_t  bool8;
+        typedef uint16_t bool16;
+        typedef uint32_t bool32;
+        typedef uint64_t bool64;
 
         #define true     1
         #define false    0
